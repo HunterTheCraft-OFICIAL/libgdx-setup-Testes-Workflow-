@@ -27,8 +27,8 @@ jobs:
           --package com.mygdx.game \
           --mainClass MyGdxGame \
           --output output \
-          --modules core,desktop \
-          --extensions box2d
+          --modules core,desktop,android,ios \
+          --extensions box2d,freetype,ashley
 
     - name: Upload generated project ZIP
       uses: actions/upload-artifact@v4
