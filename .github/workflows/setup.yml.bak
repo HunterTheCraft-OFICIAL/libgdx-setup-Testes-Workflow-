@@ -25,7 +25,7 @@ jobs:
         java -jar ./publish/gdx-setup.jar --quiet --output output
 
     - name: Upload generated project ZIP
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: libgdx-project
         path: output/*.zip
