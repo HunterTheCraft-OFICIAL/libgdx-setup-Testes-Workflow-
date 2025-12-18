@@ -19,7 +19,7 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
-- name: Run libGDX setup (headless)
+    - name: Run libGDX setup (headless)
       run: |
         mkdir output
         java -jar ./publish/gdx-setup.jar \
@@ -27,8 +27,8 @@ jobs:
           --package com.mygdx.game \
           --mainClass MyGdxGame \
           --output output \
-          --modules core,desktop,android \
-          --extensions box2d,freetype
+          --modules core,desktop,android,ios \
+          --extensions box2d,freetype,ashley
 
     - name: Upload generated project ZIP
       uses: actions/upload-artifact@v4
