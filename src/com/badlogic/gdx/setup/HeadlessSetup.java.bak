@@ -1,5 +1,4 @@
-package com.badlogic.gdx.setup;
-//package headless;
+package headless;
 
 import com.badlogic.gdx.setup.DependencyBank;
 import com.badlogic.gdx.setup.ProjectBuilder;
