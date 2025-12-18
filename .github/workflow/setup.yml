@@ -1,0 +1,31 @@
+name: Generate libGDX Project ZIP
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+
+    - name: Run libGDX setup (headless)
+      run: |
+        mkdir output
+        java -jar ./publish/gdx-setup.jar --quiet --output output
+
+    - name: Upload generated project ZIP
+      uses: actions/upload-artifact@v3
+      with:
+        name: libgdx-project
+        path: output/*.zip
