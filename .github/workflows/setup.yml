@@ -22,7 +22,13 @@ jobs:
     - name: Run libGDX setup (headless)
       run: |
         mkdir output
-        java -jar ./publish/gdx-setup.jar --quiet --output output
+        java -jar ./publish/gdx-setup.jar \
+          --name MyGdxGame \
+          --package com.mygdx.game \
+          --mainClass MyGdxGame \
+          --output output \
+          --modules core,desktop \
+          --extensions box2d
 
     - name: Upload generated project ZIP
       uses: actions/upload-artifact@v4
