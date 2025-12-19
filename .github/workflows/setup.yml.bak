@@ -19,8 +19,9 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
-    - name: Grant execute permission for gdx-setup
-      run: chmod +x gdx-setup
+# Deixei comentado para não esquecer por enquanto 
+#    - name: Grant execute permission for gdx-setup
+#      run: chmod +x gdx-setup
 
     - name: Compile HeadlessSetup
       run: javac -cp publish/gdx-setup.jar src/headless/HeadlessSetup.java

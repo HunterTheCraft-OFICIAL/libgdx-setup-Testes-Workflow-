@@ -19,14 +19,11 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
-#    - name: Grant execute permission for gdx-setup
-#      run: chmod +x gdx-setup
-
     - name: Compile HeadlessSetup
-      run: javac -cp publish/gdx-setup.jar src/headless/HeadlessSetup.java
+      run: javac -cp publish/gdx-setup.jar src/com/badlogic/gdx/setup/HeadlessSetup.java
 
     - name: Run HeadlessSetup
-      run: java -cp publish/gdx-setup.jar:src headless.HeadlessSetup
+      run: java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup
 
     - name: Package project as ZIP
       run: |
