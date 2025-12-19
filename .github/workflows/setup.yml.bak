@@ -6,20 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-variants:
+  build-sequencial:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false # Garante que se uma variante falhar, as outras continuem
-      matrix:
-        # LISTA DE VARIANTES (Deve corresponder aos nomes no VariantsCatalog.java)
-        variant: 
-          - only-desktop-basic
-          - only-android-basic
-          - mobile-basic
-          - desktop-box2d-freetype
-          - desktop-ashley-ai
-          - all-all
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -32,51 +20,44 @@ jobs:
 
     - name: Compile Setup Package
       run: |
-        echo "Compiling HeadlessSetup and VariantsCatalog..."
         javac -cp publish/gdx-setup.jar $(find src/com/badlogic/gdx/setup -name "*.java")
 
-    - name: Generate Variant (${{ matrix.variant }})
-      run: |
-        # Executa o setup usando a variante da matriz atual
-        java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-          --variant ${{ matrix.variant }} \
-          --dir build-${{ matrix.variant }} \
-          --name Game-${{ matrix.variant }} \
-          --package com.tech.variant.${{ matrix.variant }} \
-          --mainClass MainClass
+    # Criamos um arquivo para armazenar o resumo
+    - name: Init Summary
+      run: echo "# 📊 Resumo da Execução" > summary.md
 
-    - name: Compress Variant Artifact
+    # BLOCO DE EXECUÇÃO EM LINHA
+    # Repita este padrão para cada variante que deseja no fluxo
+    - name: Variant: only-desktop-basic
+      continue-on-error: true # Permite que o fluxo continue mesmo se uma falha
       run: |
-        mkdir -p output
-        cd build-${{ matrix.variant }}
-        zip -r ../output/${{ matrix.variant }}.zip .
-        cd ..
+        if java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup --variant only-desktop-basic --dir out-desktop --name DesktopGame; then
+          echo "- ✅ only-desktop-basic: SUCESSO" >> summary.md
+        else
+          echo "- ❌ only-desktop-basic: FALHOU" >> summary.md
+          exit 1
+        fi
 
-    - name: Upload Individual Variant
+    - name: Variant: desktop-box2d-freetype
+      continue-on-error: true
+      run: |
+        if java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup --variant desktop-box2d-freetype --dir out-box2d --name Box2DGame; then
+          echo "- ✅ desktop-box2d-freetype: SUCESSO" >> summary.md
+        else
+          echo "- ❌ desktop-box2d-freetype: FALHOU" >> summary.md
+          exit 1
+        fi
+
+    # ... Adicione as outras variantes aqui seguindo o mesmo padrão ...
+
+    # RESUMO FINAL NO JOB SUMMARY
+    - name: Publish Summary
+      if: always()
+      run: cat summary.md >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload Artifacts
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.variant }}-project
-        path: output/${{ matrix.variant }}.zip
-
-  # Job opcional para consolidar tudo em um único release/artefato após o término da matriz
-  consolidate:
-    needs: build-variants
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: all-variants
-
-      - name: Create Final Bundle
-        run: |
-          mkdir -p final-release
-          find all-variants -name "*.zip" -exec cp {} final-release/ \;
-          cd final-release
-          zip -r ../libgdx-complete-catalog.zip .
-          
-      - name: Upload Complete Catalog
-        uses: actions/upload-artifact@v4
-        with:
-          name: libgdx-complete-catalog
-          path: libgdx-complete-catalog.zip
+        name: all-variants-bundle
+        path: out-* # Sobe todas as pastas que começam com out-
