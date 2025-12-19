@@ -17,10 +17,10 @@ public class HeadlessSetup {
             Map<String, String> params = parseArgs(args);
 
             // Defaults
-            String outputDir = params.getOrDefault("dir", "MyGdxGame");
-            String appName   = params.getOrDefault("name", "MyGdxGame");
+            String outputDir   = params.getOrDefault("dir", "MyGdxGame");
+            String appName     = params.getOrDefault("name", "MyGdxGame");
             String packageName = params.getOrDefault("package", "com.mygdx.game");
-            String mainClass = params.getOrDefault("mainClass", "MainClass");
+            String mainClass   = params.getOrDefault("mainClass", "MainClass");
             String sdkLocation = System.getenv("ANDROID_HOME") != null ? System.getenv("ANDROID_HOME") : "";
 
             DependencyBank bank = new DependencyBank();
@@ -68,7 +68,7 @@ public class HeadlessSetup {
             }
             if (params.containsKey("excludeExtensions")) {
                 dependencies.removeIf(d -> Arrays.asList(params.get("excludeExtensions").split(";"))
-                        .contains(d.name.toLowerCase()));
+                        .contains(d.getName().toLowerCase()));
             }
 
             // Garantir pelo menos uma plataforma
@@ -79,7 +79,7 @@ public class HeadlessSetup {
 
             // Garantir biblioteca principal GDX
             boolean hasGdx = dependencies.stream()
-                    .anyMatch(d -> d.name.equalsIgnoreCase("gdx"));
+                    .anyMatch(d -> d.getName().equalsIgnoreCase("gdx"));
             if (!hasGdx) {
                 System.out.println("Biblioteca principal GDX não encontrada. Adicionando por padrão.");
                 dependencies.add(bank.getDependency(ProjectDependency.GDX));
