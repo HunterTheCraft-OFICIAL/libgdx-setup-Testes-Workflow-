@@ -20,29 +20,55 @@ jobs:
 
       - name: Compile Setup Classes
         run: |
-          # Compila todos os .java do pacote de uma vez
           javac -cp publish/gdx-setup.jar $(find src/com/badlogic/gdx/setup -name "*.java")
 
+      # 1. Desktop Basic
       - name: Generate Desktop Basic
         run: |
           java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-            --variant only-desktop-basic --dir out-desktop --name DeskBasic
+            --variant only-desktop-basic --dir out-desktop-basic --name DeskBasic
       
+      # 2. Android Basic
+      - name: Generate Android Basic
+        run: |
+          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
+            --variant only-android-basic --dir out-android-basic --name AndroidBasic
+
+      # 3. Mobile Basic (Android + iOS)
+      - name: Generate Mobile Basic
+        run: |
+          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
+            --variant mobile-basic --dir out-mobile --name MobileGame
+
+      # 4. Desktop Advanced (Box2D + FreeType)
       - name: Generate Box2D Variant
         run: |
           java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
             --variant desktop-box2d-freetype --dir out-box2d --name Box2DGame
 
-      - name: Upload Desktop Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: variant-desktop-basic
-          path: out-desktop/
+      # 5. Desktop ECS (Ashley + AI)
+      - name: Generate ECS Variant
+        run: |
+          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
+            --variant desktop-ashley-ai --dir out-ecs --name ECSGame
 
-      - name: Upload Box2D Artifact
+      # 6. Stress Test (All Platforms + All Extensions)
+      - name: Generate All-in-One Stress Test
+        run: |
+          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
+            --variant all-all --dir out-all --name StressTest
+
+      # --- UPLOAD DOS ARTEFATOS ---
+      
+      - name: Upload All Variants
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: variant-box2d
-          path: out-box2d/
+          name: libgdx-all-variants
+          path: |
+            out-desktop-basic/
+            out-android-basic/
+            out-mobile/
+            out-box2d/
+            out-ecs/
+            out-all/
