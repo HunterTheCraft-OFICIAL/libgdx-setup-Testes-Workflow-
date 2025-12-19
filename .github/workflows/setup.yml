@@ -2,100 +2,128 @@ name: Generate libGDX Project Variants
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
-  generate-all:
+  generate-sequencial:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK 8
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'temurin'
 
       - name: Compile Setup Package
         run: |
-          # Garante que as classes compiladas fiquem no diretório bin para o classpath
           mkdir -p bin
           javac -cp publish/gdx-setup.jar -d bin $(find src/com/badlogic/gdx/setup -name "*.java")
 
       - name: Initialize Summary
-        run: echo "### 📊 Resumo das Variantes" >> $GITHUB_STEP_SUMMARY
+        run: echo "### 📊 Resumo de Geração (Fluxo Sequencial)" >> $GITHUB_STEP_SUMMARY
 
       # --- BLOCO: only-desktop-basic ---
       - name: Build only-desktop-basic
-        id: variant_1
+        id: v1
         continue-on-error: true
-        run: |
-          java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
-            --variant only-desktop-basic --dir out-desktop --name DesktopGame
-          echo "VAR_1_STATUS=success" >> $GITHUB_ENV
+        run: java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup --variant only-desktop-basic --dir out-desk-basic --name DeskBasic
       
-      - name: Upload only-desktop-basic
-        if: steps.variant_1.outcome == 'success'
+      - name: Upload v1
+        if: steps.v1.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: only-desktop-basic
-          path: out-desktop/
+          path: out-desk-basic/
 
-      - name: Log only-desktop-basic Result
+      - name: Log v1 Result
         if: always()
-        run: |
-          if [ "${{ steps.variant_1.outcome }}" == "success" ]; then
-            echo "- ✅ only-desktop-basic: SUCESSO" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- ❌ only-desktop-basic: FALHOU" >> $GITHUB_STEP_SUMMARY
-          fi
+        run: echo "- ${{ steps.v1.outcome == 'success' && '✅' || '❌' }} only-desktop-basic" >> $GITHUB_STEP_SUMMARY
+
+      # --- BLOCO: only-android-basic ---
+      - name: Build only-android-basic
+        id: v2
+        continue-on-error: true
+        run: java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup --variant only-android-basic --dir out-android-basic --name AndroidBasic
+      
+      - name: Upload v2
+        if: steps.v2.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: only-android-basic
+          path: out-android-basic/
+
+      - name: Log v2 Result
+        if: always()
+        run: echo "- ${{ steps.v2.outcome == 'success' && '✅' || '❌' }} only-android-basic" >> $GITHUB_STEP_SUMMARY
+
+      # --- BLOCO: mobile-basic ---
+      - name: Build mobile-basic
+        id: v3
+        continue-on-error: true
+        run: java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup --variant mobile-basic --dir out-mobile-basic --name MobileBasic
+      
+      - name: Upload v3
+        if: steps.v3.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-basic
+          path: out-mobile-basic/
+
+      - name: Log v3 Result
+        if: always()
+        run: echo "- ${{ steps.v3.outcome == 'success' && '✅' || '❌' }} mobile-basic" >> $GITHUB_STEP_SUMMARY
 
       # --- BLOCO: desktop-box2d-freetype ---
       - name: Build desktop-box2d-freetype
-        id: variant_2
+        id: v4
         continue-on-error: true
-        run: |
-          java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
-            --variant desktop-box2d-freetype --dir out-box2d --name Box2DGame
+        run: java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup --variant desktop-box2d-freetype --dir out-box2d --name Box2DGame
       
-      - name: Upload desktop-box2d-freetype
-        if: steps.variant_2.outcome == 'success'
+      - name: Upload v4
+        if: steps.v4.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: desktop-box2d-freetype
           path: out-box2d/
 
-      - name: Log desktop-box2d-freetype Result
+      - name: Log v4 Result
         if: always()
-        run: |
-          if [ "${{ steps.variant_2.outcome }}" == "success" ]; then
-            echo "- ✅ desktop-box2d-freetype: SUCESSO" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- ❌ desktop-box2d-freetype: FALHOU" >> $GITHUB_STEP_SUMMARY
-          fi
+        run: echo "- ${{ steps.v4.outcome == 'success' && '✅' || '❌' }} desktop-box2d-freetype" >> $GITHUB_STEP_SUMMARY
+
+      # --- BLOCO: desktop-ashley-ai ---
+      - name: Build desktop-ashley-ai
+        id: v5
+        continue-on-error: true
+        run: java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup --variant desktop-ashley-ai --dir out-ashley-ai --name AshleyAIGame
+      
+      - name: Upload v5
+        if: steps.v5.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-ashley-ai
+          path: out-ashley-ai/
+
+      - name: Log v5 Result
+        if: always()
+        run: echo "- ${{ steps.v5.outcome == 'success' && '✅' || '❌' }} desktop-ashley-ai" >> $GITHUB_STEP_SUMMARY
 
       # --- BLOCO: all-all ---
       - name: Build all-all
-        id: variant_3
+        id: v6
         continue-on-error: true
-        run: |
-          java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
-            --variant all-all --dir out-all --name FullGame
+        run: java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup --variant all-all --dir out-all-all --name UltimateGame
       
-      - name: Upload all-all
-        if: steps.variant_3.outcome == 'success'
+      - name: Upload v6
+        if: steps.v6.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: all-all
-          path: out-all/
+          name: all-all-ultimate
+          path: out-all-all/
 
-      - name: Log all-all Result
+      - name: Log v6 Result
         if: always()
-        run: |
-          if [ "${{ steps.variant_3.outcome }}" == "success" ]; then
-            echo "- ✅ all-all: SUCESSO" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- ❌ all-all: FALHOU" >> $GITHUB_STEP_SUMMARY
-          fi
+        run: echo "- ${{ steps.v6.outcome == 'success' && '✅' || '❌' }} all-all (Stress Test)" >> $GITHUB_STEP_SUMMARY

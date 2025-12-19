@@ -6,58 +6,96 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-sequencial:
+  generate-all:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up JDK 8
-      uses: actions/setup-java@v3
-      with:
-        java-version: '8'
-        distribution: 'temurin'
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'temurin'
 
-    - name: Compile Setup Package
-      run: |
-        javac -cp publish/gdx-setup.jar $(find src/com/badlogic/gdx/setup -name "*.java")
+      - name: Compile Setup Package
+        run: |
+          # Garante que as classes compiladas fiquem no diretório bin para o classpath
+          mkdir -p bin
+          javac -cp publish/gdx-setup.jar -d bin $(find src/com/badlogic/gdx/setup -name "*.java")
 
-    # Criamos um arquivo para armazenar o resumo
-    - name: Init Summary
-      run: echo "# 📊 Resumo da Execução" > summary.md
+      - name: Initialize Summary
+        run: echo "### 📊 Resumo das Variantes" >> $GITHUB_STEP_SUMMARY
 
-    # BLOCO DE EXECUÇÃO EM LINHA
-    # Repita este padrão para cada variante que deseja no fluxo
-    - name: Variant: only-desktop-basic
-      continue-on-error: true # Permite que o fluxo continue mesmo se uma falha
-      run: |
-        if java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup --variant only-desktop-basic --dir out-desktop --name DesktopGame; then
-          echo "- ✅ only-desktop-basic: SUCESSO" >> summary.md
-        else
-          echo "- ❌ only-desktop-basic: FALHOU" >> summary.md
-          exit 1
-        fi
+      # --- BLOCO: only-desktop-basic ---
+      - name: Build only-desktop-basic
+        id: variant_1
+        continue-on-error: true
+        run: |
+          java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
+            --variant only-desktop-basic --dir out-desktop --name DesktopGame
+          echo "VAR_1_STATUS=success" >> $GITHUB_ENV
+      
+      - name: Upload only-desktop-basic
+        if: steps.variant_1.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: only-desktop-basic
+          path: out-desktop/
 
-    - name: Variant: desktop-box2d-freetype
-      continue-on-error: true
-      run: |
-        if java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup --variant desktop-box2d-freetype --dir out-box2d --name Box2DGame; then
-          echo "- ✅ desktop-box2d-freetype: SUCESSO" >> summary.md
-        else
-          echo "- ❌ desktop-box2d-freetype: FALHOU" >> summary.md
-          exit 1
-        fi
+      - name: Log only-desktop-basic Result
+        if: always()
+        run: |
+          if [ "${{ steps.variant_1.outcome }}" == "success" ]; then
+            echo "- ✅ only-desktop-basic: SUCESSO" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ only-desktop-basic: FALHOU" >> $GITHUB_STEP_SUMMARY
+          fi
 
-    # ... Adicione as outras variantes aqui seguindo o mesmo padrão ...
+      # --- BLOCO: desktop-box2d-freetype ---
+      - name: Build desktop-box2d-freetype
+        id: variant_2
+        continue-on-error: true
+        run: |
+          java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
+            --variant desktop-box2d-freetype --dir out-box2d --name Box2DGame
+      
+      - name: Upload desktop-box2d-freetype
+        if: steps.variant_2.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-box2d-freetype
+          path: out-box2d/
 
-    # RESUMO FINAL NO JOB SUMMARY
-    - name: Publish Summary
-      if: always()
-      run: cat summary.md >> $GITHUB_STEP_SUMMARY
+      - name: Log desktop-box2d-freetype Result
+        if: always()
+        run: |
+          if [ "${{ steps.variant_2.outcome }}" == "success" ]; then
+            echo "- ✅ desktop-box2d-freetype: SUCESSO" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ desktop-box2d-freetype: FALHOU" >> $GITHUB_STEP_SUMMARY
+          fi
 
-    - name: Upload Artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: all-variants-bundle
-        path: out-* # Sobe todas as pastas que começam com out-
+      # --- BLOCO: all-all ---
+      - name: Build all-all
+        id: variant_3
+        continue-on-error: true
+        run: |
+          java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
+            --variant all-all --dir out-all --name FullGame
+      
+      - name: Upload all-all
+        if: steps.variant_3.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-all
+          path: out-all/
+
+      - name: Log all-all Result
+        if: always()
+        run: |
+          if [ "${{ steps.variant_3.outcome }}" == "success" ]; then
+            echo "- ✅ all-all: SUCESSO" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ all-all: FALHOU" >> $GITHUB_STEP_SUMMARY
+          fi

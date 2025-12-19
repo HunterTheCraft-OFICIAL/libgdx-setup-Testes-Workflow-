@@ -74,12 +74,16 @@ public class VariantsCatalog {
     }
 
     private static void reg(String name, List<ProjectType> p, List<ProjectDependency> d) {
-        // Garante que CORE e GDX sempre estejam presentes
+        // Garante que CORE e GDX sempre estejam presentes para evitar erros de build
         List<ProjectType> platforms = new ArrayList<>(p);
-        if (!platforms.contains(ProjectType.CORE)) platforms.add(0, ProjectType.CORE);
+        if (!platforms.contains(ProjectType.CORE)) {
+            platforms.add(0, ProjectType.CORE);
+        }
 
         List<ProjectDependency> extensions = new ArrayList<>(d);
-        if (!extensions.contains(ProjectDependency.GDX)) extensions.add(0, ProjectDependency.GDX);
+        if (!extensions.contains(ProjectDependency.GDX)) {
+            extensions.add(0, ProjectDependency.GDX);
+        }
 
         VARIANTS.put(name, new Variant(name, platforms, extensions));
     }
