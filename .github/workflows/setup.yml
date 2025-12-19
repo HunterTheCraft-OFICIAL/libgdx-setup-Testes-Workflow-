@@ -57,16 +57,20 @@ jobs:
         ls -la
         echo "--- Subdiretórios ---"
         find . -maxdepth 2 -type d
+        echo "--- Conteúdo da pasta MyGdxGame ---"
+        ls -la MyGdxGame || true
 
     - name: Package project as ZIP
       run: |
         mkdir -p output
         if [ -d MyGdxGame ]; then
-          echo "Encontrada pasta MyGdxGame, compactando..."
-          zip -r output/libgdx-project.zip MyGdxGame/
+          echo "Compactando apenas a pasta MyGdxGame..."
+          cd MyGdxGame
+          zip -r ../output/libgdx-project.zip .
+          cd ..
         else
-          echo "Pasta MyGdxGame não encontrada, compactando todo o workspace..."
-          zip -r output/libgdx-project.zip .
+          echo "ERRO: Pasta MyGdxGame não encontrada!"
+          exit 1
         fi
 
     - name: Upload generated project ZIP
