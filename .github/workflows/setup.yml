@@ -1,4 +1,4 @@
-name: Generate libGDX Project ZIP
+name: Generate libGDX Project ZIP (debug)
 
 on:
   push:
@@ -19,11 +19,37 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
+    - name: Show java and javac versions
+      run: |
+        java -version
+        javac -version
+
+    - name: List repository structure
+      run: |
+        pwd
+        ls -la
+        echo "--- publish/"
+        ls -la publish || true
+        echo "--- src/"
+        ls -la src || true
+        echo "--- src/com/badlogic/gdx/setup/"
+        ls -la src/com/badlogic/gdx/setup || true
+        echo "--- find HeadlessSetup.java"
+        find src -name "HeadlessSetup.java" -print || true
+
+    - name: Verify jar presence
+      run: |
+        [ -f publish/gdx-setup.jar ] && echo "Found publish/gdx-setup.jar" || (echo "Missing publish/gdx-setup.jar" && exit 1)
+
     - name: Compile HeadlessSetup
-      run: javac -cp publish/gdx-setup.jar src/com/badlogic/gdx/setup/HeadlessSetup.java
+      run: |
+        echo "CLASSPATH: publish/gdx-setup.jar"
+        javac -cp publish/gdx-setup.jar src/com/badlogic/gdx/setup/HeadlessSetup.java
 
     - name: Run HeadlessSetup
-      run: java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup
+      run: |
+        echo "Running com.badlogic.gdx.setup.HeadlessSetup"
+        java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup
 
     - name: Package project as ZIP
       run: |
