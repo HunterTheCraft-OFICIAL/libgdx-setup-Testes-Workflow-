@@ -59,8 +59,39 @@ jobs:
         zip -r ../output/libgdx-teste.zip .
         cd ..
 
-    - name: Upload generated project ZIPs
+    # Artefato final com todas as variantes
+    - name: Package all variants together
+      run: |
+        mkdir -p output/final
+        cp output/libgdx-basic.zip output/final/
+        cp output/libgdx-all.zip output/final/
+        cp output/libgdx-teste.zip output/final/
+        cd output/final
+        zip -r ../output/libgdx-all-variants.zip .
+        cd ../..
+
+    # Upload individual artefacts
+    - name: Upload Basic ZIP
       uses: actions/upload-artifact@v4
       with:
-        name: libgdx-projects
-        path: output/*.zip
+        name: libgdx-basic
+        path: output/libgdx-basic.zip
+
+    - name: Upload All ZIP
+      uses: actions/upload-artifact@v4
+      with:
+        name: libgdx-all
+        path: output/libgdx-all.zip
+
+    - name: Upload Test ZIP
+      uses: actions/upload-artifact@v4
+      with:
+        name: libgdx-teste
+        path: output/libgdx-teste.zip
+
+    # Upload final combined artefact
+    - name: Upload All Variants ZIP
+      uses: actions/upload-artifact@v4
+      with:
+        name: libgdx-all-variants
+        path: output/libgdx-all-variants.zip
