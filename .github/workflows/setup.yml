@@ -9,7 +9,7 @@ jobs:
   build-variants:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 8
@@ -18,25 +18,31 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      - name: Compile Setup (Baseado no Log de Sucesso)
+      - name: Compile Setup Classes
         run: |
-          # Compila tudo dentro da pasta src para manter o vinculo de pacotes
+          # Compila todos os .java do pacote de uma vez
           javac -cp publish/gdx-setup.jar $(find src/com/badlogic/gdx/setup -name "*.java")
 
-      - name: Run Variant: Desktop
+      - name: Generate Desktop Basic
         run: |
           java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-          --variant only-desktop-basic --dir out-desktop --name DesktopGame
-
-      - name: Run Variant: Box2D
+            --variant only-desktop-basic --dir out-desktop --name DeskBasic
+      
+      - name: Generate Box2D Variant
         run: |
           java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-          --variant desktop-box2d-freetype --dir out-box2d --name Box2DGame
+            --variant desktop-box2d-freetype --dir out-box2d --name Box2DGame
 
-      - name: Archive All Results
+      - name: Upload Desktop Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: libgdx-variants-bundle
-          path: |
-            out-desktop/
-            out-box2d/
+          name: variant-desktop-basic
+          path: out-desktop/
+
+      - name: Upload Box2D Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: variant-box2d
+          path: out-box2d/
