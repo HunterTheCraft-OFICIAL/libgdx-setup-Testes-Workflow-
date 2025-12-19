@@ -1,4 +1,4 @@
-name: Generate libGDX Project ZIP (debug)
+name: Generate libGDX Project Variants
 
 on:
   push:
@@ -19,62 +19,48 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
-    - name: Show java and javac versions
-      run: |
-        java -version
-        javac -version
-
-    - name: List repository structure
-      run: |
-        pwd
-        ls -la
-        echo "--- publish/"
-        ls -la publish || true
-        echo "--- src/"
-        ls -la src || true
-        echo "--- src/com/badlogic/gdx/setup/"
-        ls -la src/com/badlogic/gdx/setup || true
-        echo "--- find HeadlessSetup.java"
-        find src -name "HeadlessSetup.java" -print || true
-
-    - name: Verify jar presence
-      run: |
-        [ -f publish/gdx-setup.jar ] && echo "Found publish/gdx-setup.jar" || (echo "Missing publish/gdx-setup.jar" && exit 1)
-
     - name: Compile setup package
       run: |
         echo "CLASSPATH: publish/gdx-setup.jar"
         javac -cp publish/gdx-setup.jar $(find src/com/badlogic/gdx/setup -name "*.java")
 
-    - name: Run HeadlessSetup
+    # Variante Básica
+    - name: Run HeadlessSetup (Basic)
       run: |
-        echo "Running com.badlogic.gdx.setup.HeadlessSetup"
-        java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup
-
-    - name: Inspect generated files
-      run: |
-        echo "--- Conteúdo após execução do HeadlessSetup ---"
-        ls -la
-        echo "--- Subdiretórios ---"
-        find . -maxdepth 2 -type d
-        echo "--- Conteúdo da pasta MyGdxGame ---"
-        ls -la MyGdxGame || true
-
-    - name: Package project as ZIP
-      run: |
+        java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup --mode basic --dir MyGdxBasic --name MyGdxBasic --package com.mygdx.basic --mainClass BasicMain
         mkdir -p output
-        if [ -d MyGdxGame ]; then
-          echo "Compactando apenas a pasta MyGdxGame..."
-          cd MyGdxGame
-          zip -r ../output/libgdx-project.zip .
-          cd ..
-        else
-          echo "ERRO: Pasta MyGdxGame não encontrada!"
-          exit 1
-        fi
+        cd MyGdxBasic
+        zip -r ../output/libgdx-basic.zip .
+        cd ..
 
-    - name: Upload generated project ZIP
+    # Variante Completa
+    - name: Run HeadlessSetup (All)
+      run: |
+        java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup --mode all --dir MyGdxAll --name MyGdxAll --package com.mygdx.all --mainClass AllMain
+        mkdir -p output
+        cd MyGdxAll
+        zip -r ../output/libgdx-all.zip .
+        cd ..
+
+    # Variante Personalizada (teste)
+    - name: Run HeadlessSetup (Custom Test)
+      run: |
+        java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
+          --mode custom \
+          --dir libGDX-teste \
+          --name libGDX-teste \
+          --package com.mygdx.teste \
+          --mainClass TesteMain \
+          --language java \
+          --addModules desktop;android \
+          --addExtensions box2d;ashley
+        mkdir -p output
+        cd libGDX-teste
+        zip -r ../output/libgdx-teste.zip .
+        cd ..
+
+    - name: Upload generated project ZIPs
       uses: actions/upload-artifact@v4
       with:
-        name: libgdx-project
-        path: output/libgdx-project.zip
+        name: libgdx-projects
+        path: output/*.zip
