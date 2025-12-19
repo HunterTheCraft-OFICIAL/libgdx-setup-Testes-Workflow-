@@ -1,0 +1,47 @@
+package com.badlogic.gdx.setup;
+//
+
+import java.util.*;
+
+public class VariantsCatalog {
+
+    public static class Variant {
+        public final String name;
+        public final List<DependencyBank.ProjectType> platforms;
+        public final List<DependencyBank.ProjectDependency> extensions;
+
+        public Variant(String name,
+                       List<DependencyBank.ProjectType> platforms,
+                       List<DependencyBank.ProjectDependency> extensions) {
+            this.name = name;
+            this.platforms = platforms;
+            this.extensions = extensions;
+        }
+    }
+
+    public static final Map<String, Variant> VARIANTS = new HashMap<>();
+
+    static {
+        // Exemplo Desktop ultrabasic
+        VARIANTS.put("only-Desktop-ultrabasic",
+            new Variant("only-Desktop-ultrabasic",
+                Arrays.asList(DependencyBank.ProjectType.CORE, DependencyBank.ProjectType.DESKTOP),
+                Arrays.asList(DependencyBank.ProjectDependency.GDX)));
+
+        // Exemplo Android basic
+        VARIANTS.put("only-Android-basic",
+            new Variant("only-Android-basic",
+                Arrays.asList(DependencyBank.ProjectType.CORE, DependencyBank.ProjectType.ANDROID),
+                Arrays.asList(DependencyBank.ProjectDependency.GDX, DependencyBank.ProjectDependency.BOX2D)));
+
+        // Exemplo All-all
+        VARIANTS.put("all-all",
+            new Variant("all-all",
+                Arrays.asList(DependencyBank.ProjectType.values()),
+                Arrays.asList(DependencyBank.ProjectDependency.values())));
+    }
+
+    public static Variant getVariant(String name) {
+        return VARIANTS.get(name);
+    }
+}
