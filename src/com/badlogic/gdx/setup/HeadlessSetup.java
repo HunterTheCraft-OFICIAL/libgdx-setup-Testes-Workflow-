@@ -2,6 +2,7 @@ package com.badlogic.gdx.setup;
 
 import com.badlogic.gdx.setup.DependencyBank;
 import com.badlogic.gdx.setup.DependencyBank.ProjectType;
+import com.badlogic.gdx.setup.DependencyBank.ProjectDependency;
 import com.badlogic.gdx.setup.ProjectBuilder;
 import com.badlogic.gdx.setup.Dependency;
 import com.badlogic.gdx.setup.Language;
@@ -17,13 +18,13 @@ public class HeadlessSetup {
         // Criar o builder passando o banco
         ProjectBuilder builder = new ProjectBuilder(bank);
 
-        // Definir os módulos (usando a enum interna ProjectType)
+        // Definir os módulos (CORE e DESKTOP)
         List<ProjectType> modules = Arrays.asList(ProjectType.CORE, ProjectType.DESKTOP);
 
-        // Definir as dependências (usando nomes conhecidos no DependencyBank)
+        // Definir as dependências usando o enum ProjectDependency
         List<Dependency> dependencies = Arrays.asList(
-            bank.getDependency("gdx"),
-            bank.getDependency("box2d")
+            bank.getDependency(ProjectDependency.GDX),
+            bank.getDependency(ProjectDependency.BOX2D)
         );
 
         // Construir o projeto
