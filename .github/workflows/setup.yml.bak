@@ -6,8 +6,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  setup:
+  build-variants:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Garante que se uma variante falhar, as outras continuem
+      matrix:
+        # LISTA DE VARIANTES (Deve corresponder aos nomes no VariantsCatalog.java)
+        variant: 
+          - only-desktop-basic
+          - only-android-basic
+          - mobile-basic
+          - desktop-box2d-freetype
+          - desktop-ashley-ai
+          - all-all
 
     steps:
     - name: Checkout repository
@@ -19,78 +30,53 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
-    - name: Compile setup package
+    - name: Compile Setup Package
       run: |
-        echo "CLASSPATH: publish/gdx-setup.jar"
+        echo "Compiling HeadlessSetup and VariantsCatalog..."
         javac -cp publish/gdx-setup.jar $(find src/com/badlogic/gdx/setup -name "*.java")
 
-    # Variante Básica
-    - name: Run HeadlessSetup (Basic)
+    - name: Generate Variant (${{ matrix.variant }})
       run: |
-        java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup --mode basic --dir MyGdxBasic --name MyGdxBasic --package com.mygdx.basic --mainClass BasicMain
-        mkdir -p output
-        cd MyGdxBasic
-        zip -r ../output/libgdx-basic.zip .
-        cd ..
-    - name: Upload Basic ZIP
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: libgdx-basic
-        path: output/libgdx-basic.zip
-
-    # Variante Completa
-    - name: Run HeadlessSetup (All)
-      run: |
-        java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup --mode all --dir MyGdxAll --name MyGdxAll --package com.mygdx.all --mainClass AllMain
-        mkdir -p output
-        cd MyGdxAll
-        zip -r ../output/libgdx-all.zip .
-        cd ..
-    - name: Upload All ZIP
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: libgdx-all
-        path: output/libgdx-all.zip
-
-    # Variante Personalizada (teste)
-    - name: Run HeadlessSetup (Custom Test)
-      run: |
+        # Executa o setup usando a variante da matriz atual
         java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-          --mode custom \
-          --dir libGDX-teste \
-          --name libGDX-teste \
-          --package com.mygdx.teste \
-          --mainClass TesteMain \
-          --language java \
-          --addModules desktop;android \
-          --addExtensions box2d;ashley
-        mkdir -p output
-        cd libGDX-teste
-        zip -r ../output/libgdx-teste.zip .
-        cd ..
-    - name: Upload Test ZIP
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: libgdx-teste
-        path: output/libgdx-teste.zip
+          --variant ${{ matrix.variant }} \
+          --dir build-${{ matrix.variant }} \
+          --name Game-${{ matrix.variant }} \
+          --package com.tech.variant.${{ matrix.variant }} \
+          --mainClass MainClass
 
-    # Artefato final com todas as variantes
-    - name: Package all variants together
-      if: success()
+    - name: Compress Variant Artifact
       run: |
-        mkdir -p output/final
-        cp output/libgdx-basic.zip output/final/ || true
-        cp output/libgdx-all.zip output/final/ || true
-        cp output/libgdx-teste.zip output/final/ || true
-        cd output/final
-        zip -r ../output/libgdx-all-variants.zip .
-        cd ../..
-    - name: Upload All Variants ZIP
-      if: success()
+        mkdir -p output
+        cd build-${{ matrix.variant }}
+        zip -r ../output/${{ matrix.variant }}.zip .
+        cd ..
+
+    - name: Upload Individual Variant
       uses: actions/upload-artifact@v4
       with:
-        name: libgdx-all-variants
-        path: output/libgdx-all-variants.zip
+        name: ${{ matrix.variant }}-project
+        path: output/${{ matrix.variant }}.zip
+
+  # Job opcional para consolidar tudo em um único release/artefato após o término da matriz
+  consolidate:
+    needs: build-variants
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-variants
+
+      - name: Create Final Bundle
+        run: |
+          mkdir -p final-release
+          find all-variants -name "*.zip" -exec cp {} final-release/ \;
+          cd final-release
+          zip -r ../libgdx-complete-catalog.zip .
+          
+      - name: Upload Complete Catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: libgdx-complete-catalog
+          path: libgdx-complete-catalog.zip
