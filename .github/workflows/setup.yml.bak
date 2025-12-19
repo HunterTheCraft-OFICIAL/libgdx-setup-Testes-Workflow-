@@ -19,19 +19,22 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
-    - name: Run libGDX setup (headless)
+      - name: Conceda permissão de execução para gdx-setup
+        run: chmod +x gdx-setup
+
+    - name: Compile HeadlessSetup
+      run: javac -cp publish/gdx-setup.jar src/headless/HeadlessSetup.java
+
+    - name: Run HeadlessSetup
+      run: java -cp publish/gdx-setup.jar:src headless.HeadlessSetup
+
+    - name: Package project as ZIP
       run: |
-        mkdir output
-        java -jar ./publish/gdx-setup.jar \
-          --name MyGdxGame \
-          --package com.mygdx.game \
-          --mainClass MyGdxGame \
-          --output output \
-          --modules core,desktop,android,ios \
-          --extensions box2d,freetype,ashley
+        mkdir -p output
+        zip -r output/libgdx-project.zip MyGdxGame/
 
     - name: Upload generated project ZIP
       uses: actions/upload-artifact@v4
       with:
         name: libgdx-project
-        path: output/*.zip
+        path: output/libgdx-project.zip
