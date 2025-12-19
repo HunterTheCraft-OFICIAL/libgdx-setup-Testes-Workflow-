@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * CLI Headless para automação via CI/CD (GitHub Actions).
- * Utiliza o VariantsCatalog para definir arquiteturas pré-configuradas.
+ * CLI Headless refinada para automação via GitHub Actions.
+ * Inclui sugestões de consistência de fallback e logs informativos.
  */
 public class HeadlessSetup {
     public static void main(String[] args) {
@@ -36,21 +36,19 @@ public class HeadlessSetup {
 
             if (selected != null) {
                 System.out.println("[INFO] Aplicando Variante Técnica: " + selected.name);
-                
-                // Mapeia plataformas do catálogo
-                projects.addAll(selected.platforms);
-                
-                // Mapeia dependências do catálogo
-                for (ProjectDependency pd : selected.extensions) {
-                    dependencies.add(bank.getDependency(pd));
-                }
             } else {
-                System.out.println("[WARNING] Variante '" + variantKey + "' não encontrada ou não especificada.");
-                System.out.println("[INFO] Utilizando fallback: only-desktop-basic");
+                // Sugestão Copilot: Melhorar visibilidade do erro e fallback consistente
+                System.out.println("[WARNING] Variante '" + variantKey + "' inválida ou não informada.");
+                System.out.println("[INFO] Variantes disponíveis: " + VariantsCatalog.getVariantNames());
                 
-                Variant fallback = VariantsCatalog.getVariant("only-desktop-basic");
-                projects.addAll(fallback.platforms);
-                dependencies.add(bank.getDependency(ProjectDependency.GDX));
+                selected = VariantsCatalog.getVariant("only-desktop-basic");
+                System.out.println("[INFO] Utilizando fallback padrão: " + selected.name);
+            }
+
+            // Aplicar platforms e extensões da variante (seja a escolhida ou o fallback)
+            projects.addAll(selected.platforms);
+            for (ProjectDependency pd : selected.extensions) {
+                dependencies.add(bank.getDependency(pd));
             }
 
             // --- Linguagem ---
@@ -66,7 +64,7 @@ public class HeadlessSetup {
             builder.buildProject(projects, dependencies);
             builder.build(languageEnum);
 
-            // --- Geração Física dos Arquivos (LibGDX Core) ---
+            // --- Geração Física ---
             new GdxSetup().build(builder, outputDir, appName, packageName, mainClass, languageEnum,
                     sdkLocation, new CharCallback() {
                         @Override
@@ -75,7 +73,12 @@ public class HeadlessSetup {
                         }
                     }, null);
 
-            System.out.println("\n[SUCCESS] Projeto gerado com sucesso em: " + outputDir);
+            // Sugestão Copilot: Saída mais amigável com resumo do que foi feito
+            System.out.println("\n-------------------------------------------------------");
+            System.out.println("[SUCCESS] Projeto '" + appName + "' gerado com sucesso!");
+            System.out.println("[INFO] Variante utilizada: " + selected.name);
+            System.out.println("[INFO] Localização: " + outputDir);
+            System.out.println("-------------------------------------------------------");
 
         } catch (IOException e) {
             System.err.println("[ERROR] Falha crítica na geração do projeto.");
@@ -84,9 +87,6 @@ public class HeadlessSetup {
         }
     }
 
-    /**
-     * Parse de argumentos de linha de comando (--key value)
-     */
     private static Map<String, String> parseArgs(String[] args) {
         Map<String, String> params = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
@@ -94,7 +94,7 @@ public class HeadlessSetup {
                 String key = args[i].replace("--", "");
                 String value = args[i + 1];
                 params.put(key, value);
-                i++; // Pula o valor já processado
+                i++;
             }
         }
         return params;
