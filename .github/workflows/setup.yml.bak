@@ -41,10 +41,10 @@ jobs:
       run: |
         [ -f publish/gdx-setup.jar ] && echo "Found publish/gdx-setup.jar" || (echo "Missing publish/gdx-setup.jar" && exit 1)
 
-    - name: Compile HeadlessSetup
+    - name: Compile setup package
       run: |
         echo "CLASSPATH: publish/gdx-setup.jar"
-        javac -cp publish/gdx-setup.jar src/com/badlogic/gdx/setup/HeadlessSetup.java
+        javac -cp publish/gdx-setup.jar $(find src/com/badlogic/gdx/setup -name "*.java")
 
     - name: Run HeadlessSetup
       run: |

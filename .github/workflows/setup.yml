@@ -51,10 +51,23 @@ jobs:
         echo "Running com.badlogic.gdx.setup.HeadlessSetup"
         java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup
 
+    - name: Inspect generated files
+      run: |
+        echo "--- Conteúdo após execução do HeadlessSetup ---"
+        ls -la
+        echo "--- Subdiretórios ---"
+        find . -maxdepth 2 -type d
+
     - name: Package project as ZIP
       run: |
         mkdir -p output
-        zip -r output/libgdx-project.zip MyGdxGame/
+        if [ -d MyGdxGame ]; then
+          echo "Encontrada pasta MyGdxGame, compactando..."
+          zip -r output/libgdx-project.zip MyGdxGame/
+        else
+          echo "Pasta MyGdxGame não encontrada, compactando todo o workspace..."
+          zip -r output/libgdx-project.zip .
+        fi
 
     - name: Upload generated project ZIP
       uses: actions/upload-artifact@v4
