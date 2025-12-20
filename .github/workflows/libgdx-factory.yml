@@ -1,7 +1,7 @@
 name: 'libGDX Project Factory'
 
-# This workflow allows users to generate pre-configured libGDX project structures 
-# directly from the GitHub Actions interface.
+# Este workflow permite gerar estruturas de projeto libGDX pré-configuradas
+# diretamente pela interface do GitHub Actions (aba Actions).
 on:
   workflow_dispatch:
     inputs:
@@ -13,10 +13,23 @@ on:
         description: 'Java Package (e.g., com.mycompany.game)'
         required: true
         default: 'com.mygdx.game'
-      generate_all:
-        description: 'Generate all catalog variants?'
-        type: boolean
-        default: true
+      selected_variant:
+        description: 'Select a specific variant (or "all" for everything)'
+        type: choice
+        default: 'all'
+        options:
+          - all
+          - desktop-only
+          - mobile-basic
+          - web-starter
+          - physics-2d-basic
+          - physics-3d-pro
+          - ui-heavy-suite
+          - ecs-core-ashley
+          - smart-logic-ai
+          - full-platform-stack
+          - creative-sandbox
+          - all-all
 
 jobs:
   factory:
@@ -31,7 +44,7 @@ jobs:
         with:
           java-version: '8'
           distribution: 'temurin'
-          # Enables automatic caching for Gradle dependencies to speed up future builds
+          # Cache automático para dependências do Gradle para acelerar builds futuros
           cache: 'gradle'
 
       - name: 🔨 Compile Setup Engine
@@ -41,24 +54,29 @@ jobs:
 
       - name: ⚙️ Generate Projects
         run: |
-          # Ensure the output directory exists
+          # Garante que o diretório de saída esteja limpo
           mkdir -p dist
           
-          # If 'generate_all' is true, iterate through the VariantsCatalog
-          if [ "${{ github.event.inputs.generate_all }}" == "true" ]; then
-            variants=("only-desktop-basic" "only-android-basic" "mobile-basic" "desktop-box2d-freetype" "desktop-ashley-ai" "all-all")
+          # Se 'all' for selecionado, iteramos por todas as 11 variantes do catálogo
+          if [ "${{ github.event.inputs.selected_variant }}" == "all" ]; then
+            variants=("desktop-only" "mobile-basic" "web-starter" "physics-2d-basic" "physics-3d-pro" "ui-heavy-suite" "ecs-core-ashley" "smart-logic-ai" "full-platform-stack" "creative-sandbox" "all-all")
             for v in "${variants[@]}"; do
+              echo "Factory: Generating $v..."
               java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
                 --variant $v \
                 --dir "dist/$v" \
-                --name "${{ github.event.inputs.project_name }}_$v"
+                --name "${{ github.event.inputs.project_name }}_$v" \
+                --package "${{ github.event.inputs.package_name }}"
             done
           else
-            # Generate only the default basic variant
+            # Gera apenas a variante específica selecionada no dropdown
+            v="${{ github.event.inputs.selected_variant }}"
+            echo "Factory: Generating single variant: $v"
             java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
-              --variant only-desktop-basic \
-              --dir "dist/default" \
-              --name "${{ github.event.inputs.project_name }}"
+              --variant $v \
+              --dir "dist/$v" \
+              --name "${{ github.event.inputs.project_name }}" \
+              --package "${{ github.event.inputs.package_name }}"
           fi
 
       - name: 📊 Generation Report
@@ -67,6 +85,8 @@ jobs:
           echo "### 🛠️ Factory Generation Report" >> $GITHUB_STEP_SUMMARY
           echo "**Project Name:** ${{ github.event.inputs.project_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Package:** ${{ github.event.inputs.package_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Strategy:** ${{ github.event.inputs.selected_variant }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Directory | Status |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
           if [ -d "dist" ]; then
