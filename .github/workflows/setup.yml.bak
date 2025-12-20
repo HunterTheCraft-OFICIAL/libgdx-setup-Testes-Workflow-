@@ -1,74 +1,70 @@
-name: Generate libGDX Project Variants
+name: 'libGDX Project Factory'
 
 on:
-  push:
-    branches: [ "main", "master" ]
   workflow_dispatch:
+    inputs:
+      project_name:
+        description: 'Nome do Aplicativo'
+        required: true
+        default: 'MyGdxGame'
+      package_name:
+        description: 'Pacote Java'
+        required: true
+        default: 'com.mygdx.game'
+      generate_all:
+        description: 'Gerar todas as variantes do catálogo?'
+        type: boolean
+        default: true
 
 jobs:
-  build-variants:
+  factory:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'temurin'
+          cache: 'gradle' # Ativa cache automático para dependências do Gradle
 
-      - name: Compile Setup Classes
+      - name: 🔨 Compile Setup Engine
         run: |
-          javac -cp publish/gdx-setup.jar $(find src/com/badlogic/gdx/setup -name "*.java")
+          mkdir -p bin
+          javac -cp publish/gdx-setup.jar -d bin $(find src -name "*.java")
 
-      # 1. Desktop Basic
-      - name: Generate Desktop Basic
+      - name: ⚙️ Generate Projects
         run: |
-          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-            --variant only-desktop-basic --dir out-desktop-basic --name DeskBasic
-      
-      # 2. Android Basic
-      - name: Generate Android Basic
-        run: |
-          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-            --variant only-android-basic --dir out-android-basic --name AndroidBasic
+          # Se 'generate_all' for true, percorre o catálogo. 
+          # Caso contrário, gera apenas a padrão.
+          if [ "${{ github.event.inputs.generate_all }}" == "true" ]; then
+            variants=("only-desktop-basic" "only-android-basic" "mobile-basic" "desktop-box2d-freetype" "desktop-ashley-ai" "all-all")
+            for v in "${variants[@]}"; do
+              java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
+                --variant $v \
+                --dir "dist/$v" \
+                --name "${{ github.event.inputs.project_name }}_$v"
+            done
+          else
+            java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
+              --variant only-desktop-basic \
+              --dir "dist/default" \
+              --name "${{ github.event.inputs.project_name }}"
+          fi
 
-      # 3. Mobile Basic (Android + iOS)
-      - name: Generate Mobile Basic
-        run: |
-          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-            --variant mobile-basic --dir out-mobile --name MobileGame
-
-      # 4. Desktop Advanced (Box2D + FreeType)
-      - name: Generate Box2D Variant
-        run: |
-          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-            --variant desktop-box2d-freetype --dir out-box2d --name Box2DGame
-
-      # 5. Desktop ECS (Ashley + AI)
-      - name: Generate ECS Variant
-        run: |
-          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-            --variant desktop-ashley-ai --dir out-ecs --name ECSGame
-
-      # 6. Stress Test (All Platforms + All Extensions)
-      - name: Generate All-in-One Stress Test
-        run: |
-          java -cp publish/gdx-setup.jar:src com.badlogic.gdx.setup.HeadlessSetup \
-            --variant all-all --dir out-all --name StressTest
-
-      # --- UPLOAD DOS ARTEFATOS ---
-      
-      - name: Upload All Variants
+      - name: 📊 Generation Report
         if: always()
+        run: |
+          echo "### 🛠️ Relatório de Fábrica" >> $GITHUB_STEP_SUMMARY
+          echo "**Projeto:** ${{ github.event.inputs.project_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Pacote:** ${{ github.event.inputs.package_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Pasta | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          cd dist && for d in *; do echo "| $d | ✅ Gerado |" >> $GITHUB_STEP_SUMMARY; done
+
+      - name: 📦 Archiving Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: libgdx-all-variants
-          path: |
-            out-desktop-basic/
-            out-android-basic/
-            out-mobile/
-            out-box2d/
-            out-ecs/
-            out-all/
+          name: ${{ github.event.inputs.project_name }}-variants
+          path: dist/

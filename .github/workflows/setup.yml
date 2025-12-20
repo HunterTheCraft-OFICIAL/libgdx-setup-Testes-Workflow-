@@ -1,33 +1,38 @@
 name: 'libGDX Project Factory'
 
+# This workflow allows users to generate pre-configured libGDX project structures 
+# directly from the GitHub Actions interface.
 on:
   workflow_dispatch:
     inputs:
       project_name:
-        description: 'Nome do Aplicativo'
+        description: 'Application Name (e.g., MySuperGame)'
         required: true
         default: 'MyGdxGame'
       package_name:
-        description: 'Pacote Java'
+        description: 'Java Package (e.g., com.mycompany.game)'
         required: true
         default: 'com.mygdx.game'
       generate_all:
-        description: 'Gerar todas as variantes do catálogo?'
+        description: 'Generate all catalog variants?'
         type: boolean
         default: true
 
 jobs:
   factory:
+    name: 'Build Project Variants'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'temurin'
-          cache: 'gradle' # Ativa cache automático para dependências do Gradle
+          # Enables automatic caching for Gradle dependencies to speed up future builds
+          cache: 'gradle'
 
       - name: 🔨 Compile Setup Engine
         run: |
@@ -36,8 +41,10 @@ jobs:
 
       - name: ⚙️ Generate Projects
         run: |
-          # Se 'generate_all' for true, percorre o catálogo. 
-          # Caso contrário, gera apenas a padrão.
+          # Ensure the output directory exists
+          mkdir -p dist
+          
+          # If 'generate_all' is true, iterate through the VariantsCatalog
           if [ "${{ github.event.inputs.generate_all }}" == "true" ]; then
             variants=("only-desktop-basic" "only-android-basic" "mobile-basic" "desktop-box2d-freetype" "desktop-ashley-ai" "all-all")
             for v in "${variants[@]}"; do
@@ -47,6 +54,7 @@ jobs:
                 --name "${{ github.event.inputs.project_name }}_$v"
             done
           else
+            # Generate only the default basic variant
             java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
               --variant only-desktop-basic \
               --dir "dist/default" \
@@ -56,14 +64,19 @@ jobs:
       - name: 📊 Generation Report
         if: always()
         run: |
-          echo "### 🛠️ Relatório de Fábrica" >> $GITHUB_STEP_SUMMARY
-          echo "**Projeto:** ${{ github.event.inputs.project_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Pacote:** ${{ github.event.inputs.package_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "| Pasta | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛠️ Factory Generation Report" >> $GITHUB_STEP_SUMMARY
+          echo "**Project Name:** ${{ github.event.inputs.project_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** ${{ github.event.inputs.package_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Directory | Status |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          cd dist && for d in *; do echo "| $d | ✅ Gerado |" >> $GITHUB_STEP_SUMMARY; done
+          if [ -d "dist" ]; then
+            cd dist && for d in *; do echo "| $d | ✅ Generated |" >> $GITHUB_STEP_SUMMARY; done
+          else
+            echo "| N/A | ❌ Generation Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: 📦 Archiving Artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ github.event.inputs.project_name }}-variants

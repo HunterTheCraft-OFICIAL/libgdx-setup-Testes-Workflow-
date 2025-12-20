@@ -4,6 +4,10 @@ import com.badlogic.gdx.setup.DependencyBank.ProjectDependency;
 import com.badlogic.gdx.setup.DependencyBank.ProjectType;
 import java.util.*;
 
+/**
+ * Catalog of pre-defined project variants for libGDX.
+ * Maps unique keys to specific combinations of platforms and extensions.
+ */
 public class VariantsCatalog {
 
     public static class Variant {
@@ -23,14 +27,14 @@ public class VariantsCatalog {
     static {
         // --- 1. Desktop Basic ---
         catalog.put("only-desktop-basic", new Variant(
-            "Somente Desktop (Básico)",
+            "Desktop Only (Basic)",
             Arrays.asList(ProjectType.CORE, ProjectType.DESKTOP),
             Arrays.asList(ProjectDependency.GDX)
         ));
 
         // --- 2. Android Basic ---
         catalog.put("only-android-basic", new Variant(
-            "Somente Android (Básico)",
+            "Android Only (Basic)",
             Arrays.asList(ProjectType.CORE, ProjectType.ANDROID),
             Arrays.asList(ProjectDependency.GDX)
         ));
@@ -42,14 +46,14 @@ public class VariantsCatalog {
             Arrays.asList(ProjectDependency.GDX)
         ));
 
-        // --- 4. Desktop + Box2D + FreeType ---
+        // --- 4. Desktop Advanced (Physics + Fonts) ---
         catalog.put("desktop-box2d-freetype", new Variant(
-            "Desktop Avançado (Física + Fontes)",
+            "Desktop Advanced (Box2D + FreeType)",
             Arrays.asList(ProjectType.CORE, ProjectType.DESKTOP),
             Arrays.asList(ProjectDependency.GDX, ProjectDependency.BOX2D, ProjectDependency.FREETYPE)
         ));
 
-        // --- 5. Desktop + Ashley + AI ---
+        // --- 5. Desktop ECS (Ashley + AI) ---
         catalog.put("desktop-ashley-ai", new Variant(
             "Desktop ECS (Ashley + AI)",
             Arrays.asList(ProjectType.CORE, ProjectType.DESKTOP),
@@ -58,17 +62,23 @@ public class VariantsCatalog {
 
         // --- 6. Stress Test (All Platforms + All Extensions) ---
         catalog.put("all-all", new Variant(
-            "Tudo em Tudo (Stress Test)",
+            "All-in-One (Stress Test)",
             Arrays.asList(ProjectType.CORE, ProjectType.DESKTOP, ProjectType.ANDROID, ProjectType.IOS, ProjectType.HTML),
             Arrays.asList(ProjectDependency.GDX, ProjectDependency.BOX2D, ProjectDependency.FREETYPE, 
                           ProjectDependency.ASHLEY, ProjectDependency.AI, ProjectDependency.CONTROLLERS)
         ));
     }
 
+    /**
+     * Retrieves a variant by its unique key.
+     */
     public static Variant getVariant(String key) {
         return catalog.get(key);
     }
 
+    /**
+     * Returns all available variant keys.
+     */
     public static Set<String> getVariantNames() {
         return catalog.keySet();
     }
