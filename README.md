@@ -83,74 +83,53 @@ $ java -jar ./publish/gdx-setup.jar
 ---
 
 
-🚀 New Features (Headless Automation & CI/CD) v1.11.0
-==================================================
 
-This fork introduces headless project generation and CI/CD automation capabilities, making libGDX setup usable in pipelines such as GitHub Actions.
+🚀 New Features (Headless Automation & CI/CD) v1.11.0
+
+   This fork introduces headless project generation and CI/CD automation capabilities, making libGDX setup usable in pipelines such as GitHub Actions.
 
 🔹 HeadlessSetup
-- New class HeadlessSetup allows generating libGDX projects without UI.
-- Integrates with VariantsCatalog for pre‑configured architectures.
-- Parameters supported:
-  - --variant → select technical variant.
-  - --dir → output directory.
-  - --name → project name.
-  - --package → base package.
-  - --mainClass → main class.
-  - --language → language (Java, Kotlin, etc.).
-- Cleans output directory before generation to avoid conflicts in CI runners.
-- Prints [SUCCESS] Project generated at: <dir> upon completion.
+   - New class HeadlessSetup allows generating libGDX projects without UI.
+   - Integrates with VariantsCatalog for pre‑configured architectures.
+   - Parameters supported: --variant, --dir, --name, --package, --mainClass, --language.
+   - Cleans output directory before generation to avoid conflicts in CI runners.
+   - Prints [SUCCESS] Project generated at: <dir> upon completion.
 
 🔹 VariantsCatalog
-- Central catalog of pre‑defined variants.
-- Each variant maps a unique key to platforms + extensions.
-- Available keys:
-  - only-desktop-basic → Desktop only (basic).
-  - only-android-basic → Android only (basic).
-  - mobile-basic → Mobile (Android + iOS).
-  - desktop-box2d-freetype → Desktop advanced (Box2D + FreeType).
-  - desktop-ashley-ai → Desktop ECS (Ashley + AI).
-  - all-all → Stress test (all platforms + extensions).
-- Utility methods:
-  - getVariant(key) → retrieve variant by key.
-  - getVariantNames() → list all available keys.
+   - Central catalog of pre‑defined variants.
+   - Keys: only-desktop-basic, only-android-basic, mobile-basic, desktop-box2d-freetype, desktop-ashley-ai, all-all.
 
 🔹 GitHub Actions Workflow
-- Workflow file: .github/workflows/libgdx-factory.yml.
-- Manual trigger (workflow_dispatch) with inputs:
-  - project_name → application name.
-  - package_name → Java package.
-  - generate_all → boolean to generate all catalog variants.
-- Steps:
-  1. Checkout repository.
-  2. Setup JDK 8 (Temurin).
-  3. Compile setup engine.
-  4. Generate projects:
-     - All variants if generate_all = true.
-     - Only only-desktop-basic otherwise.
-  5. Publish generation report in Job Summary.
-  6. Upload artifacts (dist/) with all generated projects.
+   - Workflow file: .github/workflows/libgdx-factory.yml.
+   - Manual trigger with inputs (projectname, packagename, generate_all).
+   - Generates all variants or just only-desktop-basic.
+   - Publishes report in Job Summary and uploads artifacts.
 
-🔹 Benefits
-- Full automation of libGDX project generation.
-- Modular catalog for easy variant management.
-- Seamless integration with CI/CD pipelines.
-- No graphical interface required.
+📦 Example Usage
+   ```bash
+   java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
+     --variant only-desktop-basic --dir MyDesktopGame --name MyDesktopGame
+   ```
 
----
+   ---
 
-📦 Example Usage (Headless)
+🚀 New Features & Infrastructure (v1.11.1)
 
-Generate a basic Desktop project:
+   This minor update consolidates the transition to a modern CI/CD environment, internationalized code, and a refined variants catalog.
 
-```bash
-java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
-  --variant only-desktop-basic --dir MyDesktopGame --name MyDesktopGame
-```
+🔹 Repository Migration
+   - Default branch moved from master to main.
+   - Repository name updated to libgdx-setup.
 
-Generate a full project with all platforms and extensions:
+🔹 VariantsCatalog (Refactored)
+   - Expanded to 11 master variants.
+   - New naming convention: desktop-only, mobile-basic, physics-2d-basic, smart-logic-ai, all-all.
 
-```bash
-java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
-  --variant all-all --dir MyFullGame --name MyFullGame
-```
+📦 Example Usage
+   ```bash
+   java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
+     --variant desktop-only --dir MyDesktopGame --name MyDesktopGame
+   ```
+
+   ---
+For a detailed history of changes and version milestones, please see the [CHANGELOG.md](./CHANGELOG.md).
