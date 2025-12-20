@@ -1,0 +1,83 @@
+name: 'libGDX Project Factory'
+
+# This workflow allows users to generate pre-configured libGDX project structures 
+# directly from the GitHub Actions interface.
+on:
+  workflow_dispatch:
+    inputs:
+      project_name:
+        description: 'Application Name (e.g., MySuperGame)'
+        required: true
+        default: 'MyGdxGame'
+      package_name:
+        description: 'Java Package (e.g., com.mycompany.game)'
+        required: true
+        default: 'com.mygdx.game'
+      generate_all:
+        description: 'Generate all catalog variants?'
+        type: boolean
+        default: true
+
+jobs:
+  factory:
+    name: 'Build Project Variants'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          # Enables automatic caching for Gradle dependencies to speed up future builds
+          cache: 'gradle'
+
+      - name: 🔨 Compile Setup Engine
+        run: |
+          mkdir -p bin
+          javac -cp publish/gdx-setup.jar -d bin $(find src -name "*.java")
+
+      - name: ⚙️ Generate Projects
+        run: |
+          # Ensure the output directory exists
+          mkdir -p dist
+          
+          # If 'generate_all' is true, iterate through the VariantsCatalog
+          if [ "${{ github.event.inputs.generate_all }}" == "true" ]; then
+            variants=("only-desktop-basic" "only-android-basic" "mobile-basic" "desktop-box2d-freetype" "desktop-ashley-ai" "all-all")
+            for v in "${variants[@]}"; do
+              java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
+                --variant $v \
+                --dir "dist/$v" \
+                --name "${{ github.event.inputs.project_name }}_$v"
+            done
+          else
+            # Generate only the default basic variant
+            java -cp publish/gdx-setup.jar:bin com.badlogic.gdx.setup.HeadlessSetup \
+              --variant only-desktop-basic \
+              --dir "dist/default" \
+              --name "${{ github.event.inputs.project_name }}"
+          fi
+
+      - name: 📊 Generation Report
+        if: always()
+        run: |
+          echo "### 🛠️ Factory Generation Report" >> $GITHUB_STEP_SUMMARY
+          echo "**Project Name:** ${{ github.event.inputs.project_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** ${{ github.event.inputs.package_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Directory | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          if [ -d "dist" ]; then
+            cd dist && for d in *; do echo "| $d | ✅ Generated |" >> $GITHUB_STEP_SUMMARY; done
+          else
+            echo "| N/A | ❌ Generation Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 📦 Archiving Artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.project_name }}-variants
+          path: dist/
